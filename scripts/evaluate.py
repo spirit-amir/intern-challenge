@@ -21,6 +21,7 @@ LANGUAGE_IDS = {
     ".js": 63,   # JavaScript (Node.js)
     ".java": 62, # Java (OpenJDK 13)
     ".cpp": 54,  # C++ (GCC 9.2.0)
+    ".c": 50,    # C (GCC 9.2.0)
 }
 
 # --- Helper Functions ---
