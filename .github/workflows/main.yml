@@ -3,54 +3,61 @@ name: Code Evaluation CI
 on:
   push:
     branches:
-      - main # Or whatever your main branch is
+      - main
     paths:
-      - 'solutions/**' # Only run when files are added/changed in the solutions folder
+      - 'solutions/**'
 
 jobs:
   evaluate-code:
-    # This is crucial! It tells GitHub to send this job to your machine.
     runs-on: self-hosted
 
     steps:
       - name: 1. Checkout Public Repo
         uses: actions/checkout@v4
         with:
-          # We need a greater fetch-depth to compare with the previous commit
-          fetch-depth: 2 
+          fetch-depth: 0
 
       - name: 2. Checkout Private Test Cases Repo
         uses: actions/checkout@v4
         with:
-          # The private repository containing test cases
           repository: spirit-amir/intern-challenge-private
-          # The PAT we stored as a secret
           token: ${{ secrets.GH_TOKEN }}
-          # The destination path for the checkout
           path: private-repo
 
       - name: 3. Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.10' # Choose a version
+          python-version: '3.10'
 
       - name: 4. Install Dependencies
         run: pip install requests
 
-      - name: 5. Find Changed Solution Files
-        id: changed_files
-        # This command gets a list of all modified/added files in the push
-        # that are inside the 'solutions/' directory.
+      - name: 5. Find All Solutions for Submitter
+        id: solution_files
         run: |
-          echo "files=$(git diff --name-only HEAD~1 HEAD | grep '^solutions/.*' | xargs)" >> $GITHUB_OUTPUT
+          SUBMITTER_DIR="solutions/${{ github.actor }}"
+          echo "Checking for all solutions from user: ${{ github.actor }}"
+          echo "Looking in directory: $SUBMITTER_DIR"
 
-      - name: 6. Run Evaluation Script for Each Changed File
-        if: steps.changed_files.outputs.files != ''
+          if [ -d "$SUBMITTER_DIR" ]; then
+            ALL_FILES=$(find "$SUBMITTER_DIR" -type f | xargs)
+            echo "Found files to test: $ALL_FILES"
+            echo "files=$ALL_FILES" >> $GITHUB_OUTPUT
+          else
+            echo "No solution directory found for user ${{ github.actor }}. Nothing to test."
+            echo "files=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 6. Run Evaluation for All Found Solutions
         env:
-          # Pass the Judge0 API Key to the script as an environment variable
           JUDGE0_API_KEY: ${{ secrets.JUDGE0_API_KEY }}
-        # The 'for' loop handles cases where multiple files are pushed at once
         run: |
-          for file in ${{ steps.changed_files.outputs.files }}; do
-            python scripts/evaluate.py "$file"
+          shopt -s globstar
+          set +e
+          for file in solutions/**; do
+            if [ -f "$file" ] && [[ "$file" != *.md ]]; then
+              echo "Evaluating solution: $file"
+              python scripts/evaluate.py "$file"
+              echo "==========================="
+            fi
           done
