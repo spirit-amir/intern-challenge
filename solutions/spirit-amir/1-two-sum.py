@@ -7,7 +7,7 @@ def find_two_sum(nums, target):
         num_dict[num] = index
     return []
 
-# Example usage:  xvgjalsg
+# Example usage: 
 
 target = int(input().strip())
 nums = list(map(int, input().strip().split()))
