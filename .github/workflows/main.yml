@@ -56,5 +56,5 @@ jobs:
           for file in $(find solutions/ -type f ! -name "*.md"); do
             echo "Evaluating solution: $file"
             python scripts/evaluate.py "$file"
-            echo "chal raha hai ji"
+            echo "$file evaluated successfully."
           done
