@@ -52,12 +52,9 @@ jobs:
         env:
           JUDGE0_API_KEY: ${{ secrets.JUDGE0_API_KEY }}
         run: |
-          shopt -s globstar
           set +e
-          for file in solutions/**; do
-            if [ -f "$file" ] && [[ "$file" != *.md ]]; then
-              echo "Evaluating solution: $file"
-              python scripts/evaluate.py "$file"
-              echo "==========================="
-            fi
+          for file in $(find solutions/ -type f ! -name "*.md"); do
+            echo "Evaluating solution: $file"
+            python scripts/evaluate.py "$file"
+            echo "chal raha hai ji"
           done
